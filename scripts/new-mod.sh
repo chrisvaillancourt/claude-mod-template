@@ -12,7 +12,7 @@ set -euo pipefail
 
 name="${1:?usage: new-mod.sh <mod-name> [<dest-dir>] [description]}"
 [[ "$name" =~ ^[a-z][a-z0-9-]{0,62}$ ]] || { echo "bad mod name: $name" >&2; exit 2; }
-template="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+template="$(CDPATH= cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 dest="${2:-$(dirname "$template")/claude-$name}"
 desc="${3:-}"
 
