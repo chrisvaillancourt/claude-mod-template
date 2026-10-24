@@ -1,0 +1,13 @@
+{
+  "name": "mod-template",
+  "owner": {
+    "name": "Chris Vaillancourt"
+  },
+  "plugins": [
+    {
+      "name": "mod-template",
+      "source": "./"
+    }
+  ],
+  "description": "A template for Claude Code mods."
+}
