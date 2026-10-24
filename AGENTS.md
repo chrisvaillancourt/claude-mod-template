@@ -52,6 +52,18 @@ The API is early access and changes between releases; the declarations are the a
 - Text a hook injects for the model must not talk about the model's thinking or reasoning ("you can't see it", "doesn't count"): Opus 5.5's reasoning-extraction safeguard refused such a request. Phrase it in terms of the reply and the work.
 - Don't build on instructions the model can ignore: a gate that "asks" the model to do something first failed live. Enforce in a hook, or give the model the information and let it decide.
 - `/clear` is `session.end` with `reason: 'clear'` and no `session.start` after it: reset per-conversation state there.
+- **Hook-owned time has a budget (about 10 s).** Time spent in a `$` call or `next` doesn't count; time awaiting the mod's own promises (a local queue, a semaphore, a timer) does, and the engine refuses the dispatch when it runs out. Never make a hook wait on local state: keep one of the hook's own `$` calls in flight, or move the work to a timer.
+- **`$.state.get` can return a stale snapshot** within a dispatch (seen live: a plain read returned this module's earlier write after another hook's later one). To check ownership right before a side effect, use a versioned `update` that writes the same value back; it retries on a version miss. It's a freshness check, not a lock: re-check after every `await` and immediately before each `$.prompt.submit`, `$.turn.abort` or `$.session.append`.
+- **Design async ownership as one state machine** (a pure `transition(state, event) → { state, actions }`, every event applied in one `update`) once a mod has corrections, holds or releases that can race newer input, `/clear`, off switches or reloads. Patching individual checks kept failing review; the state machine passed.
+- `turn.start` and `turn.complete` fire for subagents too (`e.agentId` set) on 2.1.310. Track the main turn by id and consume its completion once.
+- A plugin seated above yours (a managed plugin, prepend tier) can pass an event on past your hook: `prompt.context`, `prompt.attachment`, classic hooks and some `session.append` rows were skipped this way live. Don't build a guarantee on a hook firing; document it.
+- `session.append` can't rewrite attachments rendered per request (`@file` content); `prompt.attachment` is the hook that can. The raw attachment payload still persists in the transcript.
+- On 2.1.310 a `prompt.submit` answered `{ drop }` leaves the typed text in the prompt box. Clearing it by reading the box and replacing it races the person's typing: never replace the whole box from an earlier read.
+- `$.prompt.fill` is refused while a focused pane holds the keys: close the pane first. Button hotkeys fire even while a text field is drawn, and a Button and an Input sharing a `key` sends focus to the Button.
+- `$.fs.read` refuses files over 4 MiB (transcripts pass 50 MB); `$.process.spawn` of `tail -c +N` reads incrementally.
+- The hooks sandbox treats `__proto__` as an ordinary own key: use `Object.hasOwn` (or a `Map`) for every lookup keyed by user text (rule names, schema properties).
+- `$.model.classify` takes only labels: no rubric, timeout, effort or usage. `$.model.complete` with a rubric and `timeoutMs` worked better for judges. Haiku replies have exceeded `maxTokens`; don't promise an output bound.
+- Parallel cold requests each write the prompt cache; send one request first when many share a long cached block.
 
 ### Bugs that recur in these mods (check every change against them)
 
