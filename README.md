@@ -29,7 +29,7 @@ claude plugin install mod-template@mod-template --scope user
 
 Or from inside Claude Code: `/plugin install mod-template --marketplace chrisvaillancourt/claude-mod-template`.
 
-To work on it locally, run a session with your clone loaded: `claude --plugin-dir <path to clone>` (that session only; saving a file reloads it). If the plugin is also installed, add `--settings '{"enabledPlugins":{"mod-template@mod-template":false}}'` so only the clone loads. An installed copy, even one installed from a local clone with `claude plugin marketplace add <path to clone>`, is a snapshot under `~/.claude/plugins/cache/`; edits to the clone reach it only after you bump `version` in `.claude-plugin/plugin.json` and run the update commands below.
+To work on it locally, add your clone as the marketplace instead (`claude plugin marketplace add <path to clone>`). The plugin is read from that folder; after editing, run `/reload-plugins`.
 
 ## Update
 
